@@ -1,0 +1,156 @@
+{
+  "rules": [
+    {
+      "priority": 2,
+      "conditions": {
+        "AbsenceType": "EST - Sickness (Doctors Note)"
+      },
+      "balance_calculation": "fixed",
+      "accrual_calculation": "fixed",
+      "default_balance": 0,
+      "default_accrual": 365,
+      "minimum_balance": 0
+    },
+    {
+      "priority": 2,
+      "conditions": {
+        "AbsenceType": "MYS - Sickness"
+      },
+      "balance_calculation": "fixed",
+      "accrual_calculation": "fixed",
+      "default_balance": 0,
+      "default_accrual": 365
+    },
+    {
+      "priority": 2,
+      "conditions": {
+        "AbsenceType": "HUN - Sickness"
+      },
+      "balance_calculation": "fixed",
+      "accrual_calculation": "fixed",
+      "default_balance": 0,
+      "default_accrual": 365
+    },
+    {
+      "priority": 3,
+      "conditions": {
+        "AbsenceType": "EST - Vacation Plan (Days)"
+      },
+      "balance_calculation": "fixed",
+      "accrual_calculation": "prorate",
+      "default_balance": 0,
+      "default_accrual": 28,
+      "minimum_balance": 0
+    },
+    {
+      "priority": 3,
+      "conditions": {
+        "AbsenceType": "BRA - Vacation Plan (Days)"
+      },
+      "balance_calculation": "fixed",
+      "accrual_calculation": "prorate",
+      "default_balance": 0,
+      "default_accrual": 30
+    },
+    {
+      "priority": 3,
+      "conditions": {
+        "AbsenceType": "USA - PTO"
+      },
+      "balance_calculation": "fixed",
+      "accrual_calculation": "prorate",
+      "default_balance": 0,
+      "default_accrual": 12000
+    },
+    {
+      "priority": 3,
+      "conditions": {
+        "AbsenceType": "MEX - Vacation Plan (Days)"
+      },
+      "balance_calculation": "fixed",
+      "accrual_calculation": "prorate",
+      "default_balance": 0,
+      "default_accrual": 20
+    },
+    {
+      "priority": 3,
+      "conditions": {
+        "AbsenceType": "JPN - Sickness"
+      },
+      "balance_calculation": "fixed",
+      "accrual_calculation": "fixed",
+      "default_balance": 0,
+      "default_accrual": 365
+    },
+    {
+      "priority": 3,
+      "conditions": {
+        "AbsenceType": "BRA - Sickness"
+      },
+      "balance_calculation": "fixed",
+      "accrual_calculation": "fixed",
+      "default_balance": 0,
+      "default_accrual": 15
+    },
+    {
+      "priority": 3,
+      "conditions": {
+        "AbsenceType": "SGP - Sickness"
+      },
+      "balance_calculation": "fixed",
+      "accrual_calculation": "fixed",
+      "default_balance": 0,
+      "default_accrual": 15
+    },
+    {
+      "priority": 3,
+      "conditions": {
+        "AbsenceType": "EST - Sickness (No Doctors Note)"
+      },
+      "balance_calculation": "fixed",
+      "accrual_calculation": "fixed",
+      "default_balance": 0,
+      "default_accrual": 5
+    },
+    {
+      "priority": 3,
+      "conditions": {
+        "AbsenceType": "USA - Sickness"
+      },
+      "balance_calculation": "fixed",
+      "accrual_calculation": "prorate",
+      "default_balance": 0,
+      "default_accrual": 7200
+    },
+    {
+      "priority": 3,
+      "conditions": {
+        "AbsenceType": "USA - Compassionate (Hours)"
+      },
+      "balance_calculation": "fixed",
+      "accrual_calculation": "fixed",
+      "default_balance": 0,
+      "default_accrual": 2400
+    },
+    {
+      "priority": 4,
+      "conditions": {
+        "AbsenceType": "Global - Me Day"
+      },
+      "balance_calculation": "fixed",
+      "accrual_calculation": "me_day_global",
+      "default_balance": 0,
+      "default_accrual": 1
+    },
+    {
+      "priority": 4,
+      "conditions": {
+        "AbsenceType": "USA - Me Days (Hours)"
+      },
+      "balance_calculation": "fixed",
+      "accrual_calculation": "me_day_usa",
+      "default_balance": 0,
+      "default_accrual": 480
+    }
+  ]
+}

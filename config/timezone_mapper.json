@@ -1,0 +1,13 @@
+{
+    "Tokyo": "Asia/Tokyo",
+    "Singapore": "Asia/Singapore",
+    "London": "Europe/London",
+    "New York": "America/New_York",
+    "San Francisco": "America/Los_Angeles",
+    "Mexico City": "America/Mexico_City",
+    "Budapest": "Europe/Budapest",
+    "Tallinn": "Europe/Tallinn",
+    "Brussels": "Europe/Brussels",
+    "Sao Paulo": "America/Sao_Paulo",
+    "Kuala Lumpur": "Asia/Kuala_Lumpur"
+}

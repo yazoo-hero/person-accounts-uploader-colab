@@ -1,0 +1,67 @@
+{
+    "Tokyo": {
+        "name": "Full Time Japan",
+        "schedule": "Standard",
+        "working_hours": 8
+    },
+    "Singapore": {
+        "name": "Full Time Singapore",
+        "schedule": "Standard",
+        "working_hours": 8
+    },
+    "London": {
+        "name": "Full Time United Kingdom",
+        "schedule": "Standard",
+        "working_hours": 8
+    },
+    "New York": {
+        "name": "Full Time USA",
+        "schedule": "Standard",
+        "working_hours": 8
+    },
+    "Mexico City": {
+        "name": "Full Time Mexico",
+        "schedule": "Standard",
+        "working_hours": 8
+    },
+    "Budapest": {
+        "name": "Full Time Hungary",
+        "schedule": "Standard",
+        "working_hours": 8
+    },
+    "Budapest Part Time": {
+        "name": "Part Time Hungary",
+        "schedule": "Part Time",
+        "working_hours": 4
+    },
+    "Budapest Fixed Part Time": {
+        "name": "Fixed Part Time Hungary",
+        "schedule": "Fixed Part Time",
+        "working_hours": 6
+    },
+    "Tallinn": {
+        "name": "Full Time Estonia",
+        "schedule": "Standard",
+        "working_hours": 8
+    },
+    "Tallinn Part Time": {
+        "name": "Part Time Estonia",
+        "schedule": "Part Time",
+        "working_hours": 4
+    },
+    "Brussels": {
+        "name": "Full Time Belgium",
+        "schedule": "Standard",
+        "working_hours": 8
+    },
+    "Sao Paulo": {
+        "name": "Full Time Brazil",
+        "schedule": "Standard",
+        "working_hours": 8
+    },
+    "Kuala Lumpur": {
+        "name": "Full Time Malaysia",
+        "schedule": "Standard",
+        "working_hours": 8
+    }
+}
