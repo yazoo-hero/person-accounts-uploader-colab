@@ -3,7 +3,7 @@
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag
 from dash import html, dcc
-from .validation_config import (
+from validation_config import (
     WORKDAY_DIR, CALABRIO_DIR, CONFIG_DATA_PATH,
     get_workday_file, get_calabrio_file, get_config_file
 )

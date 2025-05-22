@@ -5,7 +5,7 @@ import os
 import json
 from datetime import datetime
 from pathlib import Path
-from .validation_config import UPLOAD_LOG_DIR, ensure_directories
+from validation_config import UPLOAD_LOG_DIR, ensure_directories
 from calabrio_py.calabrio_api import ApiClient
 
 def register_api_callbacks(app):
