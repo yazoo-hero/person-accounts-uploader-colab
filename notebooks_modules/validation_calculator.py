@@ -1,7 +1,9 @@
 import json
-from datetime import datetime, date
 import math
+from datetime import date, datetime
+
 import pandas as pd
+
 
 class BalanceCalculator:
     """Calculates correct balance and accrual based on rules."""
@@ -12,10 +14,10 @@ class BalanceCalculator:
     def _load_rules(self, rules_path):
         """Load rules from a JSON file."""
         try:
-            with open(rules_path, 'r') as f:
-                rules = json.load(f)['rules']
+            with open(rules_path, "r") as f:
+                rules = json.load(f)["rules"]
                 # Sort rules by priority
-                return sorted(rules, key=lambda x: x.get('priority', 999))
+                return sorted(rules, key=lambda x: x.get("priority", 999))
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"Error loading rules from {rules_path}: {e}")
             return []
@@ -26,7 +28,7 @@ class BalanceCalculator:
     def _get_year_start_date(self, row):
         """
         Calculate YearStartDate for accrual calculation.
-        
+
         Uses Latest Headcount Hire Date to determine the start date:
         - If hired before 2025: use January 1st, 2025
         - If hired in 2025: use actual hire date
@@ -36,21 +38,21 @@ class BalanceCalculator:
 
         try:
             # Try to get Latest Headcount Hire Date first
-            hire_date_str = row.get('Latest Headcount Hire Date')
-            if not hire_date_str or pd.isna(hire_date_str) or hire_date_str in ('', 'N/A'):
+            hire_date_str = row.get("Latest Headcount Hire Date")
+            if not hire_date_str or pd.isna(hire_date_str) or hire_date_str in ("", "N/A"):
                 # If Latest Headcount Hire Date is not available, try EmploymentStartDate
-                hire_date_str = row.get('EmploymentStartDate')
-                if not hire_date_str or pd.isna(hire_date_str) or hire_date_str in ('', 'N/A'):
+                hire_date_str = row.get("EmploymentStartDate")
+                if not hire_date_str or pd.isna(hire_date_str) or hire_date_str in ("", "N/A"):
                     return default_start
-            
+
             # Convert to datetime, handling various formats
             try:
                 # Try to parse the date string
                 if isinstance(hire_date_str, str):
                     # Handle ISO format with T separator
-                    if 'T' in hire_date_str:
-                        hire_date_str = hire_date_str.split('T')[0]
-                    
+                    if "T" in hire_date_str:
+                        hire_date_str = hire_date_str.split("T")[0]
+
                 hire_date = pd.to_datetime(hire_date_str, errors="coerce")
                 if pd.isna(hire_date):
                     return default_start
@@ -60,11 +62,11 @@ class BalanceCalculator:
             # If hire date is before current year, use January 1st
             if hire_date.year < current_year:
                 return default_start
-            
+
             # If hire date is in current year, use actual hire date
             if hire_date.year == current_year:
                 return hire_date.date()
-            
+
             # If hire date is future year (shouldn't happen), use default
             return default_start
 
@@ -82,10 +84,10 @@ class BalanceCalculator:
         """Calculate number of quarters remaining after the start date's quarter."""
         if not year_start_date:
             return 0
-        
+
         # Identify the current quarter
         start_quarter = self._calculate_quarter(year_start_date)
-        
+
         # Calculate the number of remaining quarters until the end of the year
         return max(4 - start_quarter, 0)
 
@@ -118,7 +120,7 @@ class BalanceCalculator:
             return 0
 
         remaining_quarters = self._calculate_remaining_quarters(year_start_date)
-        
+
         if is_usa:
             # USA: 480 minutes (8 hours) per quarter
             return remaining_quarters * 480
@@ -129,23 +131,23 @@ class BalanceCalculator:
     def _conditions_met(self, row, conditions):
         """Check if all conditions in a rule are met."""
         for condition_key, condition_value in conditions.items():
-            row_value = str(row.get(condition_key, '')).strip().upper()
+            row_value = str(row.get(condition_key, "")).strip().upper()
             condition_value = str(condition_value).strip().upper()
-            
+
             if row_value != condition_value:
                 return False
         return True
 
     def _calculate_accrual(self, rule, year_start_date):
         """Calculate accrual based on rule type."""
-        accrual_type = rule.get('accrual_calculation')
-        default_accrual = rule.get('default_accrual', 0)
-        absence_type = rule.get('conditions', {}).get('AbsenceType', '')
+        accrual_type = rule.get("accrual_calculation")
+        default_accrual = rule.get("default_accrual", 0)
+        absence_type = rule.get("conditions", {}).get("AbsenceType", "")
 
-        if accrual_type == 'fixed':
+        if accrual_type == "fixed":
             return default_accrual
 
-        elif accrual_type == 'prorate':
+        elif accrual_type == "prorate":
             if default_accrual in (12000, 7200):  # USA - PTO and USA - Sickness
                 ratio = self._calculate_week_proration_ratio(year_start_date)
                 return math.floor(default_accrual * ratio)
@@ -153,10 +155,10 @@ class BalanceCalculator:
                 ratio = self._calculate_proration_ratio(year_start_date)
                 return math.floor(default_accrual * ratio)
 
-        elif accrual_type == 'me_day_global':
+        elif accrual_type == "me_day_global":
             return self._calculate_me_day_balance(year_start_date, is_usa=False)
 
-        elif accrual_type == 'me_day_usa':
+        elif accrual_type == "me_day_usa":
             return self._calculate_me_day_balance(year_start_date, is_usa=True)
 
         else:
@@ -165,43 +167,47 @@ class BalanceCalculator:
     def calculate_correct_values(self, row, original_absence_type=None):
         """Calculate correct balance and accrual based on the rules."""
         try:
-            balance = float(row.get('Beginning Year Balance', 0))
+            balance = float(row.get("Beginning Year Balance", 0))
         except (ValueError, TypeError):
             balance = 0
-            
+
         year_start_date = self._get_year_start_date(row)
-        
-        absence_type = original_absence_type if original_absence_type is not None else row.get('AbsenceType', 'Unknown')
+
+        absence_type = (
+            original_absence_type
+            if original_absence_type is not None
+            else row.get("AbsenceType", "Unknown")
+        )
         normalized_absence = str(absence_type).lower().strip()
-        
+
         # Convert Workday balance (hours) to minutes for USA Absence Types
-        if normalized_absence.startswith('usa -'):
+        if normalized_absence.startswith("usa -"):
             balance = balance * 60
-        
+
         # Find the first matching rule for accrual calculation
         for rule in self.rules:
             # Use a temporary dict with the original absence type if provided
             if original_absence_type is not None:
-                temp_row = {'AbsenceType': original_absence_type}
+                temp_row = {"AbsenceType": original_absence_type}
             else:
                 temp_row = row
-            
-            rule_conditions = rule['conditions']
-            
+
+            rule_conditions = rule["conditions"]
+
             if self._conditions_met(temp_row, rule_conditions):
                 accrual = self._calculate_accrual(rule, year_start_date)
-                
+
                 # Special cases
                 if normalized_absence == "est - vacation plan (days)":
                     balance = max(0, balance)  # Clip negative balance to 0
-                
+
                 # Round the balance after all calculations
                 balance = round(balance)
-                
+
                 return balance, accrual
 
         # If no rule matches, return Workday values
-        accrual = row.get('Accrued this year', 0)
+        accrual = row.get("Accrued this year", 0)
         accrual = round(accrual)
         balance = round(balance)
 

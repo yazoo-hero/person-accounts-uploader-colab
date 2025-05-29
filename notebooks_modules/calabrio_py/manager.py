@@ -108,13 +108,9 @@ class ConfigManager:
 
                 for method_name in api_methods:
                     api_method = getattr(client, method_name)
-                    config_key = method_name.split("get_all_")[
-                        1
-                    ]  # Get the config key name
+                    config_key = method_name.split("get_all_")[1]  # Get the config key name
                     self.config_data[bu_name][config_key] = (
-                        await api_method(bu_id)
-                        if self.client.set_async
-                        else api_method(bu_id)
+                        await api_method(bu_id) if self.client.set_async else api_method(bu_id)
                     )
 
             if self.config_path:
@@ -125,12 +121,14 @@ class ConfigManager:
             return self.config_data
 
 
-import pandas as pd
-import json
-import numpy as np
 import asyncio
+import json
 from asyncio import Semaphore
+
+import numpy as np
+import pandas as pd
 from tqdm import tqdm
+
 # from calabrio_api import AddPersonRequest
 
 
@@ -168,10 +166,10 @@ class PeopleManager:
             self.bus_df = pd.DataFrame(business_units)
             if len(self.bus_df.columns) > 0:
                 self.bus_df.columns = ["BusinessUnitId", "BusinessUnitName"]
-    
+
     def __reduce__(self):
         return (self.__class__, (), self.__dict__)
-    
+
     def __getstate__(self):
         return self.__dict__
 
@@ -180,21 +178,25 @@ class PeopleManager:
         if self.config_data is None:
             if not self.client:
                 raise ValueError("Client is not initialized")
-                
+
             print("Creating ConfigManager and fetching config data...")
             self.config_manager = ConfigManager(self.client)
             try:
-                self.config_data = await self.config_manager.create_config_from_api(
-                    exclude_bu_names=exclude_bu_names
-                ) if self.client.set_async else self.config_manager.create_config_from_api(
-                    exclude_bu_names=exclude_bu_names
+                self.config_data = (
+                    await self.config_manager.create_config_from_api(
+                        exclude_bu_names=exclude_bu_names
+                    )
+                    if self.client.set_async
+                    else self.config_manager.create_config_from_api(
+                        exclude_bu_names=exclude_bu_names
+                    )
                 )
-                
+
                 if not self.config_data:
                     raise ValueError("Failed to obtain config data")
-                
+
                 print("Config data fetched successfully")
-                
+
             except Exception as e:
                 print(f"Error fetching config data: {str(e)}")
                 raise
@@ -219,8 +221,7 @@ class PeopleManager:
 
             for team_chunk in self.chunks(teams, batch_size):
                 people_tasks = [
-                    self.client.get_people_by_team_id(team["Id"], date)
-                    for team in team_chunk
+                    self.client.get_people_by_team_id(team["Id"], date) for team in team_chunk
                 ]
                 people_results = await asyncio.gather(*people_tasks)
                 people_results = [people["Result"] for people in people_results]
@@ -236,8 +237,8 @@ class PeopleManager:
     def chunks(self, lst, chunk_size):
         """Yield successive chunk_size-sized chunks from lst."""
         for i in range(0, len(lst), chunk_size):
-            yield lst[i:i + chunk_size]
-        
+            yield lst[i : i + chunk_size]
+
     async def fetch_teams_and_people_as_of_date_generator(self, date, exclude_bu_names=[]):
         if len(self.business_units) == 0:
             await self.fetch_business_units()
@@ -281,7 +282,7 @@ class PeopleManager:
                     raise ValueError("Failed to initialize config data")
                 print("Config data initialized successfully")
 
-            if not hasattr(self, 'bus_df') or self.bus_df.empty:
+            if not hasattr(self, "bus_df") or self.bus_df.empty:
                 print("Initializing business units DataFrame...")
                 if "bus" not in self.config_data:
                     raise ValueError("Config data missing 'bus' key")
@@ -310,10 +311,7 @@ class PeopleManager:
 
             # Fetch config and merge with as_of_date data
             print("Processing business unit data...")
-            [
-                self.fetch_config_data_for_business_unit(bu["Name"])
-                for bu in self.business_units
-            ]
+            [self.fetch_config_data_for_business_unit(bu["Name"]) for bu in self.business_units]
             self.fetch_config_data_as_df()
 
             # Merge the data for EOY if include_eoy is True
@@ -325,10 +323,7 @@ class PeopleManager:
                     all_people_eoy_df = self.merge_and_clean_data(flatten_all_people_eoy)
                     self.people_df = pd.concat(
                         [self.people_df, all_people_eoy_df], ignore_index=True
-                    ).drop_duplicates(
-                        subset=["BusinessUnitId", "EmploymentNumber"], 
-                        keep='last'
-                    )
+                    ).drop_duplicates(subset=["BusinessUnitId", "EmploymentNumber"], keep="last")
 
             # Merge and filter final data
             print("Finalizing data processing...")
@@ -353,13 +348,13 @@ class PeopleManager:
                 )
 
             print(f"Processing complete. Found {len(self.people_df)} records.")
-            
+
             # Return results in requested format
             if not as_df:
                 self.people = self.people_df.to_dict(orient="records")
                 return self.people
             return self.people_df
-            
+
         except Exception as e:
             print(f"Error in fetch_all_people: {str(e)}")
             raise
@@ -378,10 +373,7 @@ class PeopleManager:
         self.people_df = self.merge_and_clean_data(as_of_date_df)
 
         # Fetch config and merge with as_of_date data
-        [
-            self.fetch_config_data_for_business_unit(bu["Name"])
-            for bu in self.business_units
-        ]
+        [self.fetch_config_data_for_business_unit(bu["Name"]) for bu in self.business_units]
         self.fetch_config_data_as_df()
 
         # Merge the data for EOY if include_eoy is True
@@ -394,9 +386,7 @@ class PeopleManager:
             all_people_eoy_df = self.merge_and_clean_data(all_people_eoy_df)
 
             # Merge EOY data and drop duplicates
-            all_people_concat_df = pd.concat(
-                [self.people_df, all_people_eoy_df], ignore_index=True
-            )
+            all_people_concat_df = pd.concat([self.people_df, all_people_eoy_df], ignore_index=True)
             all_people_concat_df.drop_duplicates(
                 subset=["BusinessUnitId", "EmploymentNumber"], inplace=True
             )
@@ -430,7 +420,7 @@ class PeopleManager:
             return all_people_dict
 
         return self.people_df
-    
+
     async def fetch_all_people_generator(
         self,
         date=None,
@@ -440,10 +430,10 @@ class PeopleManager:
         exclude_bu_names=[],
     ):
         if self.config_data is None:
-            await self.fetch_config_data(
-                exclude_bu_names=exclude_bu_names
-            ) if self.client.set_async else self.fetch_config_data(
-                exclude_bu_names=exclude_bu_names
+            (
+                await self.fetch_config_data(exclude_bu_names=exclude_bu_names)
+                if self.client.set_async
+                else self.fetch_config_data(exclude_bu_names=exclude_bu_names)
             )
 
         # Assign today's date if date is None
@@ -451,19 +441,18 @@ class PeopleManager:
             date = pd.to_datetime("today").strftime("%Y-%m-%d")
 
         # Fetch and process people data as of the given date
-        as_of_date_df = pd.concat(self.fetch_teams_and_people_as_of_date_generator(
-            date, exclude_bu_names=exclude_bu_names
-        ))
+        as_of_date_df = pd.concat(
+            self.fetch_teams_and_people_as_of_date_generator(
+                date, exclude_bu_names=exclude_bu_names
+            )
+        )
         print(as_of_date_df.info())
         # Merge data and perform cleanup for as_of_date data
 
         self.people_df = self.merge_and_clean_data(as_of_date_df)
 
         # Fetch config and merge with as_of_date data
-        [
-            self.fetch_config_data_for_business_unit(bu["Name"])
-            for bu in self.business_units
-        ]
+        [self.fetch_config_data_for_business_unit(bu["Name"]) for bu in self.business_units]
         self.fetch_config_data_as_df()
 
         # Merge the data for EOY if include_eoy is True
@@ -475,9 +464,7 @@ class PeopleManager:
             all_people_eoy_df = self.merge_and_clean_data(all_people_eoy_df)
 
             # Merge EOY data and drop duplicates
-            all_people_concat_df = pd.concat(
-                [self.people_df, all_people_eoy_df], ignore_index=True
-            )
+            all_people_concat_df = pd.concat([self.people_df, all_people_eoy_df], ignore_index=True)
             all_people_concat_df.drop_duplicates(
                 subset=["BusinessUnitId", "EmploymentNumber"], inplace=True
             )
@@ -536,7 +523,6 @@ class PeopleManager:
         # If the generator is exhausted, return the collected results
         return results
 
-
     async def fetch_people_by_employment_numbers(self, employment_numbers, date=None):
         if self.config_data is None:
             await self.fetch_config_data()
@@ -544,9 +530,7 @@ class PeopleManager:
         if date is None:
             date = pd.to_datetime("today").strftime("%Y-%m-%d")
 
-        people_res = await self.client.get_people_by_employment_numbers(
-            employment_numbers, date
-        )
+        people_res = await self.client.get_people_by_employment_numbers(employment_numbers, date)
         people = people_res["Result"]
         people_df = pd.DataFrame(people)
 
@@ -556,9 +540,7 @@ class PeopleManager:
 
     def merge_and_clean_data(self, people_df):
         # Concatenate and clean up the data
-        people_df = people_df.drop_duplicates(
-            subset=["BusinessUnitId", "EmploymentNumber"]
-        )
+        people_df = people_df.drop_duplicates(subset=["BusinessUnitId", "EmploymentNumber"])
         self.bus_df["BusinessUnitId"] = self.bus_df["BusinessUnitId"].astype(
             str
         )  # Convert to string type
@@ -573,9 +555,24 @@ class PeopleManager:
             (self.contracts, "ContractId", "ContractName", "contracts"),
             (self.absences, "AbsenceId", "AbsenceName", "absences"),
             (self.roles, "RoleId", "RoleName", "roles"),
-            (self.contract_schedules, "ContractScheduleId", "ContractScheduleName", "contract_schedules"),
-            (self.workflow_control_sets, "WorkflowControlSetId", "WorkflowControlSetName", "workflow_control_sets"),
-            (self.part_time_percentages, "PartTimePercentageId", "PartTimePercentageName", "part_time_percentages"),
+            (
+                self.contract_schedules,
+                "ContractScheduleId",
+                "ContractScheduleName",
+                "contract_schedules",
+            ),
+            (
+                self.workflow_control_sets,
+                "WorkflowControlSetId",
+                "WorkflowControlSetName",
+                "workflow_control_sets",
+            ),
+            (
+                self.part_time_percentages,
+                "PartTimePercentageId",
+                "PartTimePercentageName",
+                "part_time_percentages",
+            ),
             (self.shift_bags, "ShiftBagId", "ShiftBagName", "shift_bags"),
             (self.budget_groups, "BudgetGroupId", "BudgetGroupName", "budget_groups"),
             (self.shift_categories, "ShiftCategoryId", "ShiftCategoryName", "shift_categories"),
@@ -585,7 +582,7 @@ class PeopleManager:
         for data, id_col, name_col, var_name in config_data:
             config_df = pd.concat(data)
             config_df.rename(columns={"Id": id_col, "Name": name_col}, inplace=True)
-            
+
             # Adjust the attribute name to match the desired DataFrame name
             attr_name = var_name + "_df"
             setattr(self, attr_name, config_df)
@@ -616,22 +613,32 @@ class PeopleManager:
 
     def merge_and_filter_config_data(self):
         self.people_df["BusinessUnitName"] = self.people_df["BusinessUnitName"].astype(str)
-        self.people_df["RoleId"] = self.people_df["Roles"].apply(lambda x: self.get_first_role_id(x))
+        self.people_df["RoleId"] = self.people_df["Roles"].apply(
+            lambda x: self.get_first_role_id(x)
+        )
 
         # Merge Sites DataFrame
-        self.people_df = self.people_df.merge(self.sites_df, on=["SiteId", "BusinessUnitName"], how="left")
+        self.people_df = self.people_df.merge(
+            self.sites_df, on=["SiteId", "BusinessUnitName"], how="left"
+        )
 
         # Merge Teams DataFrame
-        self.people_df = self.people_df.merge(self.teams_df, on=["TeamId", "SiteId", "SiteName", "BusinessUnitName"], how="left")
+        self.people_df = self.people_df.merge(
+            self.teams_df, on=["TeamId", "SiteId", "SiteName", "BusinessUnitName"], how="left"
+        )
 
         # Merge Contracts DataFrame
-        self.people_df = self.people_df.merge(self.contracts_df, on=["ContractId", "BusinessUnitName"], how="left")
+        self.people_df = self.people_df.merge(
+            self.contracts_df, on=["ContractId", "BusinessUnitName"], how="left"
+        )
 
         # Merge Roles DataFrame
-        self.people_df = self.people_df.merge(self.roles_df, on=["RoleId", "BusinessUnitName"], how="left")
+        self.people_df = self.people_df.merge(
+            self.roles_df, on=["RoleId", "BusinessUnitName"], how="left"
+        )
 
         return self.people_df
-    
+
     def get_first_role_id(self, role_list):
         if len(role_list) > 0:
             return role_list[0]["RoleId"]
@@ -677,14 +684,10 @@ class PeopleManager:
                 if col1 in people_df.columns:
                     lookup_values = people_df[col1].unique()
                     if col2:
-                        lookup_values_with_bu = people_df[
-                            [col1, col2]
-                        ].drop_duplicates()
+                        lookup_values_with_bu = people_df[[col1, col2]].drop_duplicates()
                         for _, row in lookup_values_with_bu.iterrows():
                             lookup_values = lookup_values.append(
-                                df[(df[col1] == row[col1]) & (df[col2] == row[col2])][
-                                    id_col
-                                ]
+                                df[(df[col1] == row[col1]) & (df[col2] == row[col2])][id_col]
                             )
                     else:
                         lookup_values = people_df[col1].unique()
@@ -692,9 +695,9 @@ class PeopleManager:
                         zip(lookup_values, df.set_index(col1)[id_col])
                     )
                     people_df[id_col] = people_df.apply(
-                        lambda x: lookup_dicts[(col1, col2)].get(x[col1])
-                        if pd.notna(x[col1])
-                        else None,
+                        lambda x: (
+                            lookup_dicts[(col1, col2)].get(x[col1]) if pd.notna(x[col1]) else None
+                        ),
                         axis=1,
                     )
 
@@ -717,18 +720,12 @@ class PeopleManager:
                     "ContractScheduleId": person["ContractScheduleId"],
                     "PartTimePercentageId": person["PartTimePercentageId"],
                     "RoleIds": [person["RoleId"]] if person["RoleId"] else [],
-                    "WorkflowControlSetId": person["WorkflowControlSetId"]
-                    if "WorkflowControlSetId" in person
-                    else "",
-                    "ShiftBagId": person["ShiftBagId"]
-                    if "ShiftBagId" in person
-                    else "",
-                    "BudgetGroupId": person["BudgetGroupId"]
-                    if "BudgetGroupId" in person
-                    else "",
-                    "FirstDayOfWeek": person["FirstDayOfWeek"]
-                    if "FirstDayOfWeek" in person
-                    else 1,
+                    "WorkflowControlSetId": (
+                        person["WorkflowControlSetId"] if "WorkflowControlSetId" in person else ""
+                    ),
+                    "ShiftBagId": person["ShiftBagId"] if "ShiftBagId" in person else "",
+                    "BudgetGroupId": person["BudgetGroupId"] if "BudgetGroupId" in person else "",
+                    "FirstDayOfWeek": person["FirstDayOfWeek"] if "FirstDayOfWeek" in person else 1,
                     "Culture": person["Culture"] if "Culture" in person else "",
                 }
 
@@ -764,9 +761,7 @@ class PeopleManager:
             if remove and (person["TerminationDate"] is not None):
                 email = "xxx" + person["Email"] if person["Email"] else None
                 employment_number = (
-                    "D" + person["EmploymentNumber"]
-                    if person["EmploymentNumber"]
-                    else None
+                    "D" + person["EmploymentNumber"] if person["EmploymentNumber"] else None
                 )
                 identity = "xxx" + person["Identity"] if person["Identity"] else None
             elif recover:
@@ -777,11 +772,7 @@ class PeopleManager:
                     if person["EmploymentNumber"]
                     else None
                 )
-                identity = (
-                    person["Identity"].replace("xxx", "")
-                    if person["Identity"]
-                    else None
-                )
+                identity = person["Identity"].replace("xxx", "") if person["Identity"] else None
             elif activate:
                 # If activating, replace 'xxx' with empty strings
                 email = person["Email"].replace("---", "") if person["Email"] else None
@@ -790,24 +781,16 @@ class PeopleManager:
                     if person["EmploymentNumber"]
                     else None
                 )
-                identity = (
-                    person["Identity"].replace("---", "")
-                    if person["Identity"]
-                    else None
-                )
+                identity = person["Identity"].replace("---", "") if person["Identity"] else None
             elif reset_new:
                 # If resetting new, replace 'xxx' and 'D' with empty strings
                 email = "---" + person["Email"] if person["Email"] else None
                 employment_number = (
-                    "N" + person["EmploymentNumber"]
-                    if person["EmploymentNumber"]
-                    else None
+                    "N" + person["EmploymentNumber"] if person["EmploymentNumber"] else None
                 )
                 identity = "---" + person["Identity"] if person["Identity"] else None
             else:
-                print(
-                    f"{person['Email']} in {person['BusinessUnitId']} is not terminated"
-                )
+                print(f"{person['Email']} in {person['BusinessUnitId']} is not terminated")
 
             print(email, employment_number, identity)
 
@@ -864,9 +847,7 @@ class PeopleManager:
                     ]
                 )
             except Exception as e:
-                log.append(
-                    [now, person["EmploymentNumber"], person["Email"], person, e, False]
-                )
+                log.append([now, person["EmploymentNumber"], person["Email"], person, e, False])
 
         return log
 
@@ -883,9 +864,7 @@ class PeopleManager:
         for person in people:
             try:
                 now = pd.to_datetime("today").strftime("%Y-%m-%d %H:%M:%S")
-                log_entry = await self._switch_person_accessibility(
-                    person, recover=True
-                )
+                log_entry = await self._switch_person_accessibility(person, recover=True)
                 log.append(
                     [
                         now,
@@ -897,15 +876,11 @@ class PeopleManager:
                     ]
                 )
             except Exception as e:
-                log.append(
-                    [now, person["EmploymentNumber"], person["Email"], person, e, False]
-                )
+                log.append([now, person["EmploymentNumber"], person["Email"], person, e, False])
 
         return log
 
-    async def activate_people_by_employment_numbers(
-        self, employment_numbers, date=None
-    ):
+    async def activate_people_by_employment_numbers(self, employment_numbers, date=None):
         log = []
         if date is None:
             date = pd.to_datetime("today").strftime("%Y-%m-%d")
@@ -918,9 +893,7 @@ class PeopleManager:
         for person in people:
             try:
                 now = pd.to_datetime("today").strftime("%Y-%m-%d %H:%M:%S")
-                log_entry = await self._switch_person_accessibility(
-                    person, activate=True
-                )
+                log_entry = await self._switch_person_accessibility(person, activate=True)
                 log.append(
                     [
                         now,
@@ -932,15 +905,11 @@ class PeopleManager:
                     ]
                 )
             except Exception as e:
-                log.append(
-                    [now, person["EmploymentNumber"], person["Email"], person, e, False]
-                )
+                log.append([now, person["EmploymentNumber"], person["Email"], person, e, False])
 
         return log
 
-    async def reset_new_people_by_employment_numbers(
-        self, employment_numbers, date=None
-    ):
+    async def reset_new_people_by_employment_numbers(self, employment_numbers, date=None):
         log = []
         if date is None:
             date = pd.to_datetime("today").strftime("%Y-%m-%d")
@@ -953,9 +922,7 @@ class PeopleManager:
         for person in people:
             try:
                 now = pd.to_datetime("today").strftime("%Y-%m-%d %H:%M:%S")
-                log_entry = await self._switch_person_accessibility(
-                    person, reset_new=True
-                )
+                log_entry = await self._switch_person_accessibility(person, reset_new=True)
                 log.append(
                     [
                         now,
@@ -967,15 +934,11 @@ class PeopleManager:
                     ]
                 )
             except Exception as e:
-                log.append(
-                    [now, person["EmploymentNumber"], person["Email"], person, e, False]
-                )
+                log.append([now, person["EmploymentNumber"], person["Email"], person, e, False])
 
         return log
 
-    async def set_termination_date_by_employment_number(
-        self, employment_number, termination_date
-    ):
+    async def set_termination_date_by_employment_number(self, employment_number, termination_date):
         # get person_id by employment_number
         date = pd.to_datetime("today").strftime("%Y-%m-%d")
         people_res = await self.client.get_people_by_employment_numbers(
@@ -995,9 +958,7 @@ class PeopleManager:
     async def find_employment_numbers_to_activate_today(self, date=None):
         if date is None:
             date = pd.to_datetime("today").strftime("%Y-%m-%d")
-        people_to_activate = self.people_df[
-            self.people_df["EmploymentStartDate"] == date
-        ]
+        people_to_activate = self.people_df[self.people_df["EmploymentStartDate"] == date]
         people_to_activate = people_to_activate[
             people_to_activate["EmploymentNumber"].str.startswith("N")
         ]
@@ -1021,9 +982,9 @@ class PeopleManager:
 class PersonAccountsManager:
     def __init__(self, people_mgr):
         self.people_mgr = people_mgr
-        self.client = people_mgr.client if hasattr(people_mgr, 'client') else people_mgr
-        self.people_df = people_mgr.people_df if hasattr(people_mgr, 'people_df') else None
-        self.config_data = people_mgr.config_data if hasattr(people_mgr, 'config_data') else None
+        self.client = people_mgr.client if hasattr(people_mgr, "client") else people_mgr
+        self.people_df = people_mgr.people_df if hasattr(people_mgr, "people_df") else None
+        self.config_data = people_mgr.config_data if hasattr(people_mgr, "config_data") else None
 
     async def fetch_config_data(self, exclude_bu_names=[]):
         if not hasattr(self, "config_data"):
@@ -1045,18 +1006,11 @@ class PersonAccountsManager:
     async def fetch_config_data_as_df(self, exclude_bu_names=[]):
         await self.fetch_config_data(exclude_bu_names=exclude_bu_names)
         self.absences = []
-        [
-            self.fetch_config(self.absences, "absences", bu["Name"])
-            for bu in self.config_data["bus"]
-        ]
+        [self.fetch_config(self.absences, "absences", bu["Name"]) for bu in self.config_data["bus"]]
         self.absences_df = pd.concat(self.absences)
-        self.absences_df.rename(
-            columns={"Id": "AbsenceId", "Name": "AbsenceName"}, inplace=True
-        )
+        self.absences_df.rename(columns={"Id": "AbsenceId", "Name": "AbsenceName"}, inplace=True)
 
-    async def fetch_and_process_chunk(
-        self, client, chunk, date, max_retry, max_concurrent
-    ):
+    async def fetch_and_process_chunk(self, client, chunk, date, max_retry, max_concurrent):
         semaphore = asyncio.Semaphore(max_concurrent)
         person_accounts_with_id = []
 
@@ -1120,7 +1074,9 @@ class PersonAccountsManager:
                 people_df = self.people_df
 
         if not isinstance(people_df, pd.DataFrame):
-            raise ValueError("people_df must be a pandas DataFrame, got type: " + str(type(people_df)))
+            raise ValueError(
+                "people_df must be a pandas DataFrame, got type: " + str(type(people_df))
+            )
 
         people_df["BusinessUnitId"] = people_df["BusinessUnitId"].astype(str)
 
@@ -1191,9 +1147,7 @@ class PersonAccountsManager:
         person_accounts_df = person_accounts_df.drop(columns=["Period"])
 
         if not with_id:
-            person_accounts_df = person_accounts_df.drop(
-                columns=["PersonId", "AbsenceId"]
-            )
+            person_accounts_df = person_accounts_df.drop(columns=["PersonId", "AbsenceId"])
 
         if not details:
             person_accounts_df = person_accounts_df.drop(
@@ -1273,9 +1227,7 @@ class PersonAccountsManager:
         if date is None:
             date = pd.to_datetime("today").strftime("%Y-%m-%d")
 
-        people_df = self.people_df[
-            self.people_df["EmploymentNumber"].isin(employment_numbers)
-        ]
+        people_df = self.people_df[self.people_df["EmploymentNumber"].isin(employment_numbers)]
         person_accounts_df = await self.fetch_person_accounts(
             date,
             people_df,
@@ -1315,21 +1267,19 @@ class PersonAccountsManager:
         if not hasattr(self, "people_df"):
             await self.fetch_all_people()
 
-        person_id = self.people_df[
-            (self.people_df["EmploymentNumber"] == employment_number)
-        ]["PersonId"].tolist()[0]
+        person_id = self.people_df[(self.people_df["EmploymentNumber"] == employment_number)][
+            "PersonId"
+        ].tolist()[0]
 
-        absence_id = self.absences_df[
-            (self.absences_df["AbsenceName"] == absence_name)
-        ]["AbsenceId"].tolist()[0]
+        absence_id = self.absences_df[(self.absences_df["AbsenceName"] == absence_name)][
+            "AbsenceId"
+        ].tolist()[0]
 
         # find existing person account for this person and absence
         person_accounts = self.fetch_person_accounts_by_employment_numbers(
             [employment_number], with_id=True
         )
-        person_account = person_accounts[
-            (person_accounts["AbsenceName"] == absence_name)
-        ][0]
+        person_account = person_accounts[(person_accounts["AbsenceName"] == absence_name)][0]
 
         # add PersonId and AbsenceId using people_df and self.absence_df if not present
         if (
@@ -1342,9 +1292,7 @@ class PersonAccountsManager:
             ]
 
         # convert StartDate and EndDate to string
-        person_accounts = [
-            self.convert_date_to_string(account) for account in person_accounts
-        ]
+        person_accounts = [self.convert_date_to_string(account) for account in person_accounts]
 
         person_accounts = await asyncio.gather(
             *[
@@ -1392,12 +1340,12 @@ class PersonAccountsManager:
     async def adhoc_update_person_account_by_employment_number(
         self, employment_number, absence_name, date_from, balance_in, extra, accrued
     ):
-        person_id = self.people_df[
-            self.people_df["EmploymentNumber"] == employment_number
-        ]["PersonId"].iloc[0]
-        bu_name = self.people_df[
-            self.people_df["EmploymentNumber"] == employment_number
-        ]["BusinessUnitName"].iloc[0]
+        person_id = self.people_df[self.people_df["EmploymentNumber"] == employment_number][
+            "PersonId"
+        ].iloc[0]
+        bu_name = self.people_df[self.people_df["EmploymentNumber"] == employment_number][
+            "BusinessUnitName"
+        ].iloc[0]
         absence_id = self.absences_df[
             (self.absences_df["AbsenceName"] == absence_name)
             & (self.absences_df["BusinessUnitName"] == bu_name)
@@ -1425,14 +1373,12 @@ class ScheduleManager:
         self.fetch_absences_df()
         self.RETRY_MAX_ATTEMPTS = 5
         self.RETRY_BASE_DELAY = 1  # in seconds
-        self.retrying = False # flag to indicate if the client is retrying a request
+        self.retrying = False  # flag to indicate if the client is retrying a request
 
     def fetch_activities_df(self):
         self.activities_df = []
         for bu in self.people_mgr.bus_df.to_dict("records"):
-            activities = self.people_mgr.config_data[bu["BusinessUnitName"]][
-                "activities"
-            ]["Result"]
+            activities = self.people_mgr.config_data[bu["BusinessUnitName"]]["activities"]["Result"]
             activities_df = pd.DataFrame(activities)
             activities_df["BusinessUnitName"] = bu["BusinessUnitName"]
             self.activities_df.append(activities_df)
@@ -1445,9 +1391,7 @@ class ScheduleManager:
     def fetch_absences_df(self):
         self.absences_df = []
         for bu in self.people_mgr.bus_df.to_dict("records"):
-            absences = self.people_mgr.config_data[bu["BusinessUnitName"]]["absences"][
-                "Result"
-            ]
+            absences = self.people_mgr.config_data[bu["BusinessUnitName"]]["absences"]["Result"]
             absences_df = pd.DataFrame(absences)
             absences_df["BusinessUnitName"] = bu["BusinessUnitName"]
             self.absences_df.append(absences_df)
@@ -1464,7 +1408,13 @@ class ScheduleManager:
             return None
 
     async def get_all_schedules_in_all_bus(
-        self, start_date, end_date, with_ids=False, exclude_bu_names=[], as_df=True, max_concurrent=50
+        self,
+        start_date,
+        end_date,
+        with_ids=False,
+        exclude_bu_names=[],
+        as_df=True,
+        max_concurrent=50,
     ):
         try:
             # Get a list of unique business unit names
@@ -1473,11 +1423,7 @@ class ScheduleManager:
                 f"Fetching schedules for {bu_names} ... Please note that this list includes only the business units that have been set in the People Instance associated with this instance"
             )
             # exclude business units in exclude_bu_names
-            bu_names = [
-                bu_name
-                for bu_name in bu_names
-                if bu_name not in exclude_bu_names
-            ]
+            bu_names = [bu_name for bu_name in bu_names if bu_name not in exclude_bu_names]
 
             # Initialize a list to store schedules
             schedules = []
@@ -1512,9 +1458,9 @@ class ScheduleManager:
             if as_df:
                 if schedules:
                     schedules_df = pd.concat(schedules, ignore_index=True)
-                    for schedule in schedules:                        
+                    for schedule in schedules:
                         print(schedules_df)
-                        schedules_df.drop_duplicates(subset=['StartTime','Email'],inplace=True)
+                        schedules_df.drop_duplicates(subset=["StartTime", "Email"], inplace=True)
                     return schedules_df
                 else:
                     return pd.DataFrame()
@@ -1552,9 +1498,7 @@ class ScheduleManager:
             print("Error occurred in get_schedule_by_bu_name:", error)
             return pd.DataFrame()
 
-    async def _fetch_schedule_data(
-        self, team_id, bu_id, start_date, end_date, max_retries=3
-    ):
+    async def _fetch_schedule_data(self, team_id, bu_id, start_date, end_date, max_retries=3):
         retries = 0
 
         while retries < max_retries:
@@ -1586,39 +1530,33 @@ class ScheduleManager:
             schedules_df["ShiftCategoryName"] = schedules_df["ShiftCategory"].apply(
                 lambda x: x["Name"] if x is not None else None
             )
-            schedules_df["ShiftCategoryShortName"] = schedules_df[
-                "ShiftCategory"
-            ].apply(lambda x: x["ShortName"] if x is not None else None)
+            schedules_df["ShiftCategoryShortName"] = schedules_df["ShiftCategory"].apply(
+                lambda x: x["ShortName"] if x is not None else None
+            )
             schedules_df.drop(columns=["ShiftCategory"], inplace=True)
             schedules_df["DayOffName"] = schedules_df["DayOff"].apply(
                 lambda x: x["Name"] if x is not None else None
             )
-            schedules_df["AbsenceName"] = schedules_df.apply(
-                self.copy_first_shift_name, axis=1
-            )
+            schedules_df["AbsenceName"] = schedules_df.apply(self.copy_first_shift_name, axis=1)
             schedules_df["StartTime"] = schedules_df.apply(
-                lambda x: pd.to_datetime(x["Shift"][0]["Period"]["StartTime"])
-                if x["Shift"]
-                else None,
+                lambda x: (
+                    pd.to_datetime(x["Shift"][0]["Period"]["StartTime"]) if x["Shift"] else None
+                ),
                 axis=1,
             )
             schedules_df["EndTime"] = schedules_df.apply(
-                lambda x: pd.to_datetime(x["Shift"][-1]["Period"]["EndTime"])
-                if x["Shift"]
-                else None,
+                lambda x: (
+                    pd.to_datetime(x["Shift"][-1]["Period"]["EndTime"]) if x["Shift"] else None
+                ),
                 axis=1,
             )
-            schedules_df["Duration"] = (
-                schedules_df["EndTime"] - schedules_df["StartTime"]
-            )
+            schedules_df["Duration"] = schedules_df["EndTime"] - schedules_df["StartTime"]
             schedules_df["Name"] = (
                 schedules_df["ShiftCategoryShortName"]
                 .fillna(schedules_df["AbsenceName"])
                 .fillna(schedules_df["DayOffName"])
             )
-            schedules_df["Shift"] = (
-                schedules_df["Shift"]          
-            )
+            schedules_df["Shift"] = schedules_df["Shift"]
 
             org_info_df = self.people_df[
                 [
@@ -1648,7 +1586,7 @@ class ScheduleManager:
                     "ShiftCategoryShortName",
                     "DayOffName",
                     "AbsenceName",
-                    "Shift"
+                    "Shift",
                 ]
             ]
             schedules_df = schedules_df[~schedules_df["Name"].isna()]
@@ -1666,9 +1604,7 @@ class ScheduleManager:
         try:
             teams = self.people_mgr.teams_df
             team_id = teams[teams["TeamName"] == team_name]["TeamId"].values[0]
-            bu_name = teams[teams["TeamName"] == team_name]["BusinessUnitName"].values[
-                0
-            ]
+            bu_name = teams[teams["TeamName"] == team_name]["BusinessUnitName"].values[0]
             bus = self.people_mgr.bus_df
             bu_id = bus[bus["BusinessUnitName"] == bu_name]["BusinessUnitId"].values[0]
 
@@ -1677,9 +1613,7 @@ class ScheduleManager:
             )
 
             if not schedules_df.empty:
-                self.schedules_df = self._process_schedule_dataframe(
-                    schedules_df, with_ids
-                )
+                self.schedules_df = self._process_schedule_dataframe(schedules_df, with_ids)
 
                 if as_df:
                     return self.schedules_df
@@ -1707,19 +1641,21 @@ class ScheduleManager:
                 ]["PersonId"].values
                 person_ids = list(person_ids)
                 if len(person_ids) == 0:
-                    print('No person ids found for the given employment numbers')
+                    print("No person ids found for the given employment numbers")
                     return {"Result": []}
                 schedule_task = await self.client.get_schedule_by_person_ids(
                     person_ids, start_date, end_date
                 )
-                if len(schedule_task['Errors']) > 0:
-                    raise Exception(schedule_task['Errors'])
+                if len(schedule_task["Errors"]) > 0:
+                    raise Exception(schedule_task["Errors"])
 
                 return schedule_task
             except Exception as error:
                 if attempt < self.RETRY_MAX_ATTEMPTS - 1:  # If not the last attempt
-                    wait_time = self.RETRY_BASE_DELAY * (2 ** attempt)
-                    print(f"Error occurred in process_schedule_chunk. Retrying in {wait_time} seconds...")
+                    wait_time = self.RETRY_BASE_DELAY * (2**attempt)
+                    print(
+                        f"Error occurred in process_schedule_chunk. Retrying in {wait_time} seconds..."
+                    )
                     await asyncio.sleep(wait_time)
                 else:
                     print("Error occurred in process_schedule_chunk:", error)
@@ -1738,10 +1674,7 @@ class ScheduleManager:
         max_concurrent=50,
     ):
         # split into chunks
-        chunks = [
-            employment_numbers[i : i + 200]
-            for i in range(0, len(employment_numbers), 200)
-        ]
+        chunks = [employment_numbers[i : i + 200] for i in range(0, len(employment_numbers), 200)]
 
         schedule_tasks = []
         try:
@@ -1770,20 +1703,14 @@ class ScheduleManager:
                 schedules_res for schedules_res in schedules_res_list if schedules_res
             ]
 
-            schedules_list = [
-                schedules_res["Result"] for schedules_res in schedules_res_list
-            ]
+            schedules_list = [schedules_res["Result"] for schedules_res in schedules_res_list]
             print(schedules_list)
-            flattened_schedules = [
-                schedule for sublist in schedules_list for schedule in sublist
-            ]
+            flattened_schedules = [schedule for sublist in schedules_list for schedule in sublist]
 
             if len(flattened_schedules) > 0:
                 if as_df:
                     schedules_df = pd.DataFrame(flattened_schedules)
-                    self.schedules_df = self._process_schedule_dataframe(
-                        schedules_df, with_ids
-                    )
+                    self.schedules_df = self._process_schedule_dataframe(schedules_df, with_ids)
                     return self.schedules_df
                 else:
                     return flattened_schedules
@@ -1797,7 +1724,7 @@ class ScheduleManager:
         except Exception as error:
             print("Error occurred in get_schedule_by_employment_numbers: ", error)
             return pd.DataFrame()
-        
+
     async def generate_schedule_by_employment_numbers(
         self,
         employment_numbers,
@@ -1807,8 +1734,7 @@ class ScheduleManager:
     ):
         try:
             chunks = [
-                employment_numbers[i : i + 200]
-                for i in range(0, len(employment_numbers), 200)
+                employment_numbers[i : i + 200] for i in range(0, len(employment_numbers), 200)
             ]
 
             semaphore = asyncio.Semaphore(max_concurrent)
@@ -1821,7 +1747,7 @@ class ScheduleManager:
         except Exception as error:
             print("Error occurred in generate_schedule_by_employment_numbers: ", error)
             yield None  # Yield None in case of an error
-    
+
     async def generate_schedule_activities_by_employment_numbers(
         self,
         employment_numbers,
@@ -1845,7 +1771,7 @@ class ScheduleManager:
             async for schedules in schedule_generator:
                 print("Schedules fetched")
                 schedule_activities = await self.get_schedule_activities(
-                    schedules['Result'], with_ids, as_df, with_duration, query=query
+                    schedules["Result"], with_ids, as_df, with_duration, query=query
                 )
                 print("Converted to schedule activities")
 
@@ -1880,7 +1806,9 @@ class ScheduleManager:
             schedules_activities = []
 
             # Generate and accumulate schedule activities
-            async for schedule_activities_chunk in self.generate_schedule_activities_by_employment_numbers(
+            async for (
+                schedule_activities_chunk
+            ) in self.generate_schedule_activities_by_employment_numbers(
                 employment_numbers,
                 start_date,
                 end_date,
@@ -1894,10 +1822,9 @@ class ScheduleManager:
                 # if not isinstance(schedule_activities_chunk, pd.DataFrame):
                 #     continue
                 schedules_activities.append(schedule_activities_chunk)
-                
+
             schedules_activities_df = pd.concat(schedules_activities, ignore_index=True)
             return schedules_activities_df
-
 
         except Exception as error:
             # If an error occurs during the process, print the error and return an empty DataFrame.
@@ -1921,17 +1848,15 @@ class ScheduleManager:
                 self.people_mgr.people_df["BusinessUnitName"].isin(bu_names)
             ]["EmploymentNumber"].values
 
-            schedules_activities = (
-                await self.get_schedule_activities_by_employment_numbers(
-                    employment_numbers,
-                    start_date,
-                    end_date,
-                    with_ids,
-                    as_df=True,
-                    with_duration=with_duration,
-                    max_concurrent=max_concurrent,
-                    query=query,
-                )
+            schedules_activities = await self.get_schedule_activities_by_employment_numbers(
+                employment_numbers,
+                start_date,
+                end_date,
+                with_ids,
+                as_df=True,
+                with_duration=with_duration,
+                max_concurrent=max_concurrent,
+                query=query,
             )
 
             return schedules_activities
@@ -1954,15 +1879,12 @@ class ScheduleManager:
             ["PersonId", "BusinessUnitName", "TeamName", "EmploymentNumber", "Email"]
         ]
 
-        schedule_activities_df = self.convert_activities_to_dataframe(
-            schedule_activities
-        )
+        schedule_activities_df = self.convert_activities_to_dataframe(schedule_activities)
 
         schedule_activities_df = schedule_activities_df.merge(
             org_info_df, on="PersonId", how="left"
         )
 
-        
         if with_duration:
             schedule_activities_df["Duration"] = (
                 schedule_activities_df["EndTime"] - schedule_activities_df["StartTime"]
@@ -2004,7 +1926,6 @@ class ScheduleManager:
             schedule_activities_df.drop(
                 columns=["PersonId", "ActivityId", "AbsenceId"], inplace=True
             )
-        
 
         return schedule_activities_df
 
@@ -2021,7 +1942,7 @@ class ScheduleManager:
                         extracted_activity = {
                             **activity,
                             "PersonId": schedule["PersonId"],
-                            "Date": schedule["Date"]
+                            "Date": schedule["Date"],
                         }
                         extracted_activities.append(extracted_activity)
         return extracted_activities
@@ -2029,13 +1950,15 @@ class ScheduleManager:
     def convert_activities_to_dataframe(self, activities):
         df_dict = {
             "ActivityName": [activity["Name"] for activity in activities],
-            "StartTime": [pd.to_datetime(activity["Period"]["StartTime"]) for activity in activities],
+            "StartTime": [
+                pd.to_datetime(activity["Period"]["StartTime"]) for activity in activities
+            ],
             "EndTime": [pd.to_datetime(activity["Period"]["EndTime"]) for activity in activities],
             "PersonId": [activity["PersonId"] for activity in activities],
             "Date": [activity["Date"] for activity in activities],
             "Overtime": [activity["Overtime"] for activity in activities],
             "ActivityId": [activity["ActivityId"] for activity in activities],
-            "AbsenceId": [activity["AbsenceId"] for activity in activities]
+            "AbsenceId": [activity["AbsenceId"] for activity in activities],
         }
         df = pd.DataFrame(df_dict)
         return df
@@ -2057,13 +1980,9 @@ class ScheduleManager:
             try:
                 teams = self.people_mgr.teams_df
                 team_id = teams[teams["TeamName"] == team_name]["TeamId"].values[0]
-                bu_name = teams[teams["TeamName"] == team_name][
-                    "BusinessUnitName"
-                ].values[0]
+                bu_name = teams[teams["TeamName"] == team_name]["BusinessUnitName"].values[0]
                 bus = self.people_mgr.bus_df
-                bu_id = bus[bus["BusinessUnitName"] == bu_name][
-                    "BusinessUnitId"
-                ].values[0]
+                bu_id = bus[bus["BusinessUnitName"] == bu_name]["BusinessUnitId"].values[0]
 
                 schedules_res = await self.client.get_schedule_by_team_id(
                     bu_id, team_id, start_date, end_date

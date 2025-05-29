@@ -1,23 +1,21 @@
-import os
-import requests
-import aiohttp
 import asyncio
 import builtins
-from requests.exceptions import RequestException
-from datetime import datetime
-from typing import List, Dict, Any
-import logging
-import json
 import functools
+import json
+import logging
+import os
 import time
+from datetime import datetime
+from typing import Any, Dict, List
+
+import aiohttp
+import requests
+from requests.exceptions import RequestException
 
 # Configure logging to use console only
-logging.basicConfig(
-    level=logging.ERROR,
-    format="%(message)s",
-    handlers=[logging.StreamHandler()]
-)
+logging.basicConfig(level=logging.ERROR, format="%(message)s", handlers=[logging.StreamHandler()])
 logger = logging.getLogger(__name__)
+
 
 # Custom JSON encoder function to handle non-serializable objects
 def custom_encoder(obj):
@@ -26,6 +24,7 @@ def custom_encoder(obj):
         return f"{obj.__class__.__name__}: {obj.base_url}"
     # Default handling for other non-serializable types
     return str(obj)
+
 
 # Define a decorator to log the specified information for both sync and async functions
 def log_function_info(func):
@@ -184,7 +183,7 @@ class CustomApiException(Exception):
 class ApiClientBase:
     def __init__(self, base_url, api_key):
         # Ensure base_url doesn't end with a slash and is properly formatted
-        self.base_url = base_url.rstrip('/') if base_url else ''
+        self.base_url = base_url.rstrip("/") if base_url else ""
         self.api_key = api_key
         self.is_async = False
 
@@ -193,115 +192,111 @@ class ApiClientBase:
 
     # @log_function_info
     def make_request_sync(self, method, url, **kwargs):
-            """
-            Sends a synchronous HTTP request to the specified URL using the specified HTTP method.
+        """
+        Sends a synchronous HTTP request to the specified URL using the specified HTTP method.
 
-            Args:
-                method (str): The HTTP method to use for the request (e.g. "GET", "POST", etc.).
-                url (str): The URL to send the request to.
-                **kwargs: Additional keyword arguments to pass to the requests.request method.
+        Args:
+            method (str): The HTTP method to use for the request (e.g. "GET", "POST", etc.).
+            url (str): The URL to send the request to.
+            **kwargs: Additional keyword arguments to pass to the requests.request method.
 
-            Returns:
-                The JSON response from the server, or error details if an error occurred.
-            """
-            try:
-                # Create logs directory if it doesn't exist
-                if not os.path.exists("logs"):
-                    os.makedirs("logs")
-                
-                # Log request information for debug logs
-                debug_log = {
-                    "timestamp": datetime.now().isoformat(),
-                    "method": method,
-                    "url": url,
-                    "kwargs": kwargs,
-                    "request_data": kwargs.get('json') # Log request data if present
-                }
-                
-                response = requests.request(method, url, **kwargs)
-                response.raise_for_status()
+        Returns:
+            The JSON response from the server, or error details if an error occurred.
+        """
+        try:
+            # Create logs directory if it doesn't exist
+            if not os.path.exists("logs"):
+                os.makedirs("logs")
 
-                # Log response to debug logs (especially for AddOrUpdatePersonAccountForPerson endpoint)
-                if "AddOrUpdatePersonAccountForPerson" in url:
-                    debug_log["response"] = {
-                        "status_code": response.status_code,
-                        "headers": dict(response.headers),
-                        "body": response.text
-                    }
-                    debug_log_path = os.path.join("logs", "api_debug.log")
-                    with open(debug_log_path, "a") as f:
-                        f.write(json.dumps(debug_log, indent=2) + "\n\n")
-            except requests.exceptions.HTTPError as e:
-                error_message = f"HTTP Error: {str(e)}"
-                try:
-                    error_detail = response.text
-                    error_message += f", Response: {error_detail}"
-                    
-                    # Log error details to debug logs
-                    debug_log["error"] = {
-                        "message": str(e),
-                        "status_code": response.status_code,
-                        "response": error_detail
-                    }
-                    debug_log_path = os.path.join("logs", "api_debug.log")
-                    with open(debug_log_path, "a") as f:
-                        f.write(json.dumps(debug_log, indent=2) + "\n\n")
-                        
-                except Exception as ex:
-                    logger.error(f"Error logging failed: {str(ex)}")
-                    
-                logger.error(error_message)
-                return {"error": error_message}
+            # Log request information for debug logs
+            debug_log = {
+                "timestamp": datetime.now().isoformat(),
+                "method": method,
+                "url": url,
+                "kwargs": kwargs,
+                "request_data": kwargs.get("json"),  # Log request data if present
+            }
 
-            try:
-                response_json = response.json()
-                
-                # Debug log on successful JSON parsing
-                if "AddOrUpdatePersonAccountForPerson" in url:
-                    debug_log["response_json"] = response_json
-                    debug_log_path = os.path.join("logs", "api_debug.log")
-                    with open(debug_log_path, "a") as f:
-                        f.write(json.dumps(debug_log, indent=2) + "\n\n")
-                        
-            except ValueError as e:
-                error_message = f"Invalid JSON: {str(e)}"
-                try:
-                    error_detail = response.text
-                    error_message += f", Response: {error_detail}"
-                    
-                    # Debug log on JSON parsing error
-                    debug_log["json_error"] = {
-                        "message": str(e),
-                        "response_text": error_detail
-                    }
-                    debug_log_path = os.path.join("logs", "api_debug.log")
-                    with open(debug_log_path, "a") as f:
-                        f.write(json.dumps(debug_log, indent=2) + "\n\n")
-                        
-                except Exception as ex:
-                    logger.error(f"Error logging failed: {str(ex)}")
-                    
-                logger.error(error_message)
-                return {"error": error_message}
+            response = requests.request(method, url, **kwargs)
+            response.raise_for_status()
 
-            if "Errors" in response_json and response_json["Errors"]:  # Error handling only if not empty
-                errors = response_json["Errors"]
-                error_messages = [error["Message"] for error in errors]
-                error_message = f"API Errors: {', '.join(error_messages)}"
-                
-                # Log API error details to debug logs
-                debug_log["api_errors"] = {
-                    "errors": errors,
-                    "error_message": error_message
+            # Log response to debug logs (especially for AddOrUpdatePersonAccountForPerson endpoint)
+            if "AddOrUpdatePersonAccountForPerson" in url:
+                debug_log["response"] = {
+                    "status_code": response.status_code,
+                    "headers": dict(response.headers),
+                    "body": response.text,
                 }
                 debug_log_path = os.path.join("logs", "api_debug.log")
                 with open(debug_log_path, "a") as f:
                     f.write(json.dumps(debug_log, indent=2) + "\n\n")
-                    
-                logger.error(error_message)
-                return {"error": error_message}
+        except requests.exceptions.HTTPError as e:
+            error_message = f"HTTP Error: {str(e)}"
+            try:
+                error_detail = response.text
+                error_message += f", Response: {error_detail}"
 
-            return response_json
+                # Log error details to debug logs
+                debug_log["error"] = {
+                    "message": str(e),
+                    "status_code": response.status_code,
+                    "response": error_detail,
+                }
+                debug_log_path = os.path.join("logs", "api_debug.log")
+                with open(debug_log_path, "a") as f:
+                    f.write(json.dumps(debug_log, indent=2) + "\n\n")
+
+            except Exception as ex:
+                logger.error(f"Error logging failed: {str(ex)}")
+
+            logger.error(error_message)
+            return {"error": error_message}
+
+        try:
+            response_json = response.json()
+
+            # Debug log on successful JSON parsing
+            if "AddOrUpdatePersonAccountForPerson" in url:
+                debug_log["response_json"] = response_json
+                debug_log_path = os.path.join("logs", "api_debug.log")
+                with open(debug_log_path, "a") as f:
+                    f.write(json.dumps(debug_log, indent=2) + "\n\n")
+
+        except ValueError as e:
+            error_message = f"Invalid JSON: {str(e)}"
+            try:
+                error_detail = response.text
+                error_message += f", Response: {error_detail}"
+
+                # Debug log on JSON parsing error
+                debug_log["json_error"] = {"message": str(e), "response_text": error_detail}
+                debug_log_path = os.path.join("logs", "api_debug.log")
+                with open(debug_log_path, "a") as f:
+                    f.write(json.dumps(debug_log, indent=2) + "\n\n")
+
+            except Exception as ex:
+                logger.error(f"Error logging failed: {str(ex)}")
+
+            logger.error(error_message)
+            return {"error": error_message}
+
+        if (
+            "Errors" in response_json and response_json["Errors"]
+        ):  # Error handling only if not empty
+            errors = response_json["Errors"]
+            error_messages = [error["Message"] for error in errors]
+            error_message = f"API Errors: {', '.join(error_messages)}"
+
+            # Log API error details to debug logs
+            debug_log["api_errors"] = {"errors": errors, "error_message": error_message}
+            debug_log_path = os.path.join("logs", "api_debug.log")
+            with open(debug_log_path, "a") as f:
+                f.write(json.dumps(debug_log, indent=2) + "\n\n")
+
+            logger.error(error_message)
+            return {"error": error_message}
+
+        return response_json
 
     @log_function_info
     async def make_request_async(self, method, url, **kwargs):
@@ -311,8 +306,8 @@ class ApiClientBase:
             async with session.request(method, url, **kwargs) as response:
                 try:
                     response.raise_for_status()
-                    content_type = response.headers.get('content-type', '')
-                    if 'application/json' not in content_type:
+                    content_type = response.headers.get("content-type", "")
+                    if "application/json" not in content_type:
                         text = await response.text()
                         error_message = f"Unexpected content type: {content_type}, Response: {text}"
                         logger.error(error_message)
@@ -356,52 +351,46 @@ class ApiClientBase:
 
     def get(self, url, params=None):
         headers = {"Authorization": f"Bearer {self.api_key}"}
-        return self.make_request(
-            "GET", self.base_url + url, headers=headers, params=params
-        )
+        return self.make_request("GET", self.base_url + url, headers=headers, params=params)
 
     def post(self, url, data=None):
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}",
-            "Accept": "application/json"
+            "Accept": "application/json",
         }
         # Construct URL without duplication
         # Remove trailing slash from base_url if present
-        base = self.base_url.rstrip('/')
-        
+        base = self.base_url.rstrip("/")
+
         # Remove leading slash from url if present
-        path = url.lstrip('/')
-        
+        path = url.lstrip("/")
+
         # Check if base already ends with /api
-        if base.endswith('/api'):
+        if base.endswith("/api"):
             # If url starts with command/ or query/, just append it
-            if path.startswith('command/') or path.startswith('query/'):
+            if path.startswith("command/") or path.startswith("query/"):
                 full_url = f"{base}/{path}"
             else:
                 # Otherwise, check if url already has /api prefix
-                if path.startswith('api/'):
+                if path.startswith("api/"):
                     full_url = f"{base}/{path[4:]}"  # Remove 'api/' from path
                 else:
                     full_url = f"{base}/{path}"
         else:
             # If base doesn't end with /api, add it
-            if path.startswith('api/'):
+            if path.startswith("api/"):
                 full_url = f"{base}/{path}"
             else:
                 full_url = f"{base}/api/{path}"
-        
-        return self.make_request(
-            "POST", full_url, headers=headers, json=data
-        )
+
+        return self.make_request("POST", full_url, headers=headers, json=data)
 
     def get_all_commands(self):
         url = f"{self.base_url}/command"
         return self.get(url)
 
-    def add_full_day_absence(
-        self, business_unit_id, person_id, date, absence_id, scenario_id=None
-    ):
+    def add_full_day_absence(self, business_unit_id, person_id, date, absence_id, scenario_id=None):
         request_data = {
             "BusinessUnitId": business_unit_id,
             "PersonId": person_id,
@@ -617,9 +606,7 @@ class ApiClientBase:
         request_data = {}
         return self.post(url, request_data)
 
-    def remove_full_day_absence(
-        self, business_unit_id, person_id, period, scenario_id=None
-    ):
+    def remove_full_day_absence(self, business_unit_id, person_id, period, scenario_id=None):
         url = f"{self.base_url}/command/RemoveFullDayAbsence"
         request_data = {
             "BusinessUnitId": business_unit_id,
@@ -677,9 +664,7 @@ class ApiClientBase:
         }
         return self.post(url, request_data)
 
-    def remove_skills_for_person(
-        self, business_unit_id, person_id, start_date, skill_ids
-    ):
+    def remove_skills_for_person(self, business_unit_id, person_id, start_date, skill_ids):
         url = f"{self.base_url}/command/RemoveSkillsForPerson"
         request_data = {
             "BusinessUnitId": business_unit_id,
@@ -689,9 +674,7 @@ class ApiClientBase:
         }
         return self.post(url, request_data)
 
-    def set_availability(
-        self, business_unit_id, person_id, availability_id, start_date
-    ):
+    def set_availability(self, business_unit_id, person_id, availability_id, start_date):
         url = f"{self.base_url}/command/SetAvailability"
         request_data = {
             "BusinessUnitId": business_unit_id,
@@ -701,9 +684,7 @@ class ApiClientBase:
         }
         return self.post(url, request_data)
 
-    def set_budget_group_for_person(
-        self, business_unit_id, start_date, person_id, budget_group_id
-    ):
+    def set_budget_group_for_person(self, business_unit_id, start_date, person_id, budget_group_id):
         url = f"{self.base_url}/command/SetBudgetGroupForPerson"
         request_data = {
             "BusinessUnitId": business_unit_id,
@@ -807,9 +788,7 @@ class ApiClientBase:
         request_data = {"PersonId": person_id, "RoleIds": role_ids}
         return self.post(url, request_data)
 
-    def set_rotation(
-        self, business_unit_id, person_id, rotation_id, start_date, start_week
-    ):
+    def set_rotation(self, business_unit_id, person_id, rotation_id, start_date, start_week):
         url = f"{self.base_url}/command/SetRotation"
         request_data = {
             "BusinessUnitId": business_unit_id,
@@ -854,9 +833,7 @@ class ApiClientBase:
         }
         return self.post(url, request_data)
 
-    def set_shift_bag_for_person(
-        self, business_unit_id, start_date, person_id, shift_bag_id
-    ):
+    def set_shift_bag_for_person(self, business_unit_id, start_date, person_id, shift_bag_id):
         url = f"{self.base_url}/command/SetShiftBagForPerson"
         request_data = {
             "BusinessUnitId": business_unit_id,
@@ -1001,9 +978,7 @@ class ApiClientBase:
         }
         return self.post(url, request_data)
 
-    def get_locations_by_person_ids(
-        self, business_unit_id, person_ids, start_date, end_date
-    ):
+    def get_locations_by_person_ids(self, business_unit_id, person_ids, start_date, end_date):
         url = f"{self.base_url}/query/Location/LocationsByPersonIds"
         request_data = {
             "BusinessUnitId": business_unit_id,
@@ -1026,9 +1001,7 @@ class ApiClientBase:
         url = f"{self.base_url}/query/OptionalColumn/AllOptionalColumns"
         if optional_query_parameters:
             url += "?"
-            url += "&".join(
-                [f"{key}={value}" for key, value in optional_query_parameters.items()]
-            )
+            url += "&".join([f"{key}={value}" for key, value in optional_query_parameters.items()])
         request_data = {"BusinessUnitId": business_unit_id}
         return self.post(url, request_data)
 
@@ -1043,9 +1016,7 @@ class ApiClientBase:
         }
         return self.post(url, request_data)
 
-    def get_overtime_request_configuration_by_person_id(
-        self, business_unit_id, person_id, date
-    ):
+    def get_overtime_request_configuration_by_person_id(self, business_unit_id, person_id, date):
         url = f"{self.base_url}/query/OvertimeRequestConfiguration/OvertimeRequestConfigurationByPersonId"
         request_data = {
             "BusinessUnitId": business_unit_id,
@@ -1100,9 +1071,7 @@ class ApiClientBase:
         }
         return self.post(url, request_data)
 
-    def get_people_by_identities(
-        self, identities, date, include_optional_columns=False
-    ):
+    def get_people_by_identities(self, identities, date, include_optional_columns=False):
         url = f"{self.base_url}/query/Person/PeopleByIdentities"
         request_data = {
             "Identities": identities,
@@ -1120,9 +1089,7 @@ class ApiClientBase:
         }
         return self.post(url, request_data)
 
-    def get_people_by_skill_group(
-        self, skill_group_id, date, include_optional_columns=False
-    ):
+    def get_people_by_skill_group(self, skill_group_id, date, include_optional_columns=False):
         url = f"{self.base_url}/query/Person/PeopleBySkillGroup"
         request_data = {
             "SkillGroupId": skill_group_id,
@@ -1203,13 +1170,11 @@ class ApiClientBase:
             "Period": {
                 "StartDate": start_date,
                 "EndDate": end_date,
-            }
+            },
         }
         return self.post(url, request_data)
 
-    def get_schedule_by_person_id(
-        self, person_id, start_date, end_date, scenario_id=None
-    ):
+    def get_schedule_by_person_id(self, person_id, start_date, end_date, scenario_id=None):
         url = f"{self.base_url}/query/Schedule/ScheduleByPersonId"
         request_data = {
             "PersonId": person_id,
@@ -1218,9 +1183,7 @@ class ApiClientBase:
         }
         return self.post(url, request_data)
 
-    def get_schedule_by_person_ids(
-        self, person_ids, start_date, end_date, scenario_id=None
-    ):
+    def get_schedule_by_person_ids(self, person_ids, start_date, end_date, scenario_id=None):
         url = f"{self.base_url}/query/Schedule/ScheduleByPersonIds"
         request_data = {
             "PersonIds": person_ids,
@@ -1278,9 +1241,7 @@ class ApiClientBase:
         request_data = {"BusinessUnitId": business_unit_id}
         return self.post(url, request_data)
 
-    def get_all_staffing_by_skills(
-        self, business_unit_id, skill_ids, start_time, end_time
-    ):
+    def get_all_staffing_by_skills(self, business_unit_id, skill_ids, start_time, end_time):
         url = f"{self.base_url}/query/Staffing/StaffingBySkills"
         request_data = {
             "BusinessUnitId": business_unit_id,
@@ -1374,8 +1335,8 @@ class AsyncApiClient(ApiClientBase):
         async with self._session.request(method, url, **kwargs) as response:
             try:
                 response.raise_for_status()
-                content_type = response.headers.get('content-type', '')
-                if 'application/json' not in content_type:
+                content_type = response.headers.get("content-type", "")
+                if "application/json" not in content_type:
                     text = await response.text()
                     logger.error(f"Unexpected content type: {content_type}, Response: {text}")
                     return None
@@ -1392,6 +1353,8 @@ class AsyncApiClient(ApiClientBase):
             if response_json.get("Errors") and len(response_json["Errors"]) > 0:
                 errors = response_json["Errors"]
                 error_messages = [error["Message"] for error in errors]
-                logger.error("API Errors: %s, kwargs: %s", "\n".join(error_messages), json.dumps(kwargs))
+                logger.error(
+                    "API Errors: %s, kwargs: %s", "\n".join(error_messages), json.dumps(kwargs)
+                )
 
             return response_json

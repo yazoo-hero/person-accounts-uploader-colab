@@ -3,7 +3,4 @@
 This package contains modules for validation data processing and display.
 """
 
-from . import validation_data_loader
-from . import validation_preprocessing
-from . import validation_table_creator
-
+from . import validation_data_loader, validation_preprocessing, validation_table_creator
