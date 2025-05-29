@@ -2,34 +2,34 @@
 
 from pathlib import Path
 
-# ベースディレクトリ
+# Base directories
 PROJECT_ROOT = Path(__file__).parent.parent
 DATA_DIR = PROJECT_ROOT / 'data'
-CONFIG_DIR = PROJECT_ROOT / 'config'  # 追加: 設定ディレクトリ
+CONFIG_DIR = PROJECT_ROOT / 'config'  # Added: Configuration directory
 LOGS_DIR = PROJECT_ROOT / 'logs'
 
-# Workdayデータのパス
+# Workday data paths
 WORKDAY_DIR = DATA_DIR / 'workday'
 PERSON_ACCOUNTS_DIR = WORKDAY_DIR / 'person_accounts'
 PEOPLE_DIR = WORKDAY_DIR / 'people'
 USED_ENTRIES_DIR = WORKDAY_DIR / 'used_entries'
 
-# Calabrioデータのパス
+# Calabrio data paths
 CALABRIO_DIR = DATA_DIR / 'calabrio'
 ACCOUNT_DATA_PATH = CALABRIO_DIR / 'account_data.json'
 PERSON_DATA_PATH = CALABRIO_DIR / 'person_data.json'
 
-# 設定ファイルのパス
+# Configuration file paths
 CONFIG_DATA_PATH = CALABRIO_DIR / 'config_data.json'
-BALANCE_RULES_PATH = CONFIG_DIR / 'balance_rules.json'  # 追加: バランスルールのパス
+BALANCE_RULES_PATH = CONFIG_DIR / 'balance_rules.json'  # Added: Balance rules path
 
-# ログファイルの設定
+# Log file settings
 UPLOAD_LOG_DIR = LOGS_DIR / 'uploads'
 
-# 各ディレクトリを作成
+# Create each directory
 def ensure_directories():
-    """必要なディレクトリを作成."""
-    # ベースディレクトリの作成
+    """Create necessary directories."""
+    # Creating base directories
     for directory in [DATA_DIR, CONFIG_DIR, LOGS_DIR]:
         try:
             if directory.exists() and directory.is_file():
@@ -40,7 +40,7 @@ def ensure_directories():
         except Exception as e:
             print(f"Warning: Failed to create directory {directory}: {e}")
 
-    # Workdayディレクトリの作成
+    # Creating Workday directories
     for directory in [WORKDAY_DIR, PERSON_ACCOUNTS_DIR, PEOPLE_DIR, USED_ENTRIES_DIR]:
         try:
             if directory.exists() and directory.is_file():
@@ -51,33 +51,33 @@ def ensure_directories():
         except Exception as e:
             print(f"Warning: Failed to create directory {directory}: {e}")
 
-    # Calabrioディレクトリの処理
+    # Processing Calabrio directories
     try:
-        # config_data.jsonファイルの親ディレクトリを作成
+        # Create parent directory for config_data.json file
         if not CONFIG_DATA_PATH.parent.exists():
             CONFIG_DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
     except Exception as e:
         print(f"Warning: Failed to create Calabrio directory: {e}")
 
-    # ログディレクトリの作成
+    # Creating log directory
     try:
         UPLOAD_LOG_DIR.mkdir(parents=True, exist_ok=True)
     except Exception as e:
         print(f"Warning: Failed to create upload log directory: {e}")
 
-# データファイルのパスを取得する関数
+# Functions to get data file paths
 def get_workday_file(filename):
-    """Workdayファイルの完全なパスを取得."""
+    """Get full path for Workday files."""
     return WORKDAY_DIR / filename
 
 def get_calabrio_file(filename):
-    """Calabrioファイルの完全なパスを取得."""
+    """Get full path for Calabrio files."""
     return CALABRIO_DIR / filename
 
 def get_config_file(filename):
-    """設定ファイルの完全なパスを取得."""
-    return CONFIG_DIR / filename  # 修正: CONFIG_DATA_PATHの代わりにCONFIG_DIRを使用
+    """Get full path for configuration files."""
+    return CONFIG_DIR / filename  # Correction: Use CONFIG_DIR instead of CONFIG_DATA_PATH
 
 def get_log_file(filename):
-    """ログファイルの完全なパスを取得."""
+    """Get full path for log files."""
     return UPLOAD_LOG_DIR / filename

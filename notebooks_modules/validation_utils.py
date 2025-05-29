@@ -28,8 +28,8 @@ def create_filter_options(validation_df):
                     for val in validation_df['Workday Absence Type'].dropna().unique()]
     contracts = [{'label': str(val), 'value': str(val)} 
                 for val in validation_df['ContractName'].dropna().unique()]
-    balance_matches = [{'label': '一致', 'value': '✅'}, {'label': '不一致', 'value': '❌'}]
-    accrual_matches = [{'label': '一致', 'value': '✅'}, {'label': '不一致', 'value': '❌'}]
+    balance_matches = [{'label': 'Match', 'value': '✅'}, {'label': 'Mismatch', 'value': '❌'}]
+    accrual_matches = [{'label': 'Match', 'value': '✅'}, {'label': 'Mismatch', 'value': '❌'}]
     
     return {
         'absence_types': absence_types,

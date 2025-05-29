@@ -83,10 +83,10 @@ class BalanceCalculator:
         if not year_start_date:
             return 0
         
-        # 現在の四半期を特定
+        # Identify the current quarter
         start_quarter = self._calculate_quarter(year_start_date)
         
-        # 年末までの残りの四半期数を計算
+        # Calculate the number of remaining quarters until the end of the year
         return max(4 - start_quarter, 0)
 
     def _calculate_proration_ratio(self, year_start_date):

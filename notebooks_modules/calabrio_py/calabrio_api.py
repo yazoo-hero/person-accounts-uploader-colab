@@ -205,11 +205,11 @@ class ApiClientBase:
                 The JSON response from the server, or error details if an error occurred.
             """
             try:
-                # logsディレクトリが存在しない場合は作成
+                # Create logs directory if it doesn't exist
                 if not os.path.exists("logs"):
                     os.makedirs("logs")
                 
-                # デバッグログ用にリクエスト情報を記録
+                # Log request information for debug logs
                 debug_log = {
                     "timestamp": datetime.now().isoformat(),
                     "method": method,
@@ -221,7 +221,7 @@ class ApiClientBase:
                 response = requests.request(method, url, **kwargs)
                 response.raise_for_status()
 
-                # デバッグログにレスポンスを記録 (特にAddOrUpdatePersonAccountForPersonエンドポイント)
+                # Log response to debug logs (especially for AddOrUpdatePersonAccountForPerson endpoint)
                 if "AddOrUpdatePersonAccountForPerson" in url:
                     debug_log["response"] = {
                         "status_code": response.status_code,
@@ -237,7 +237,7 @@ class ApiClientBase:
                     error_detail = response.text
                     error_message += f", Response: {error_detail}"
                     
-                    # エラー時の詳細をデバッグログに記録
+                    # Log error details to debug logs
                     debug_log["error"] = {
                         "message": str(e),
                         "status_code": response.status_code,
@@ -256,7 +256,7 @@ class ApiClientBase:
             try:
                 response_json = response.json()
                 
-                # JSON解析成功時のデバッグログ
+                # Debug log on successful JSON parsing
                 if "AddOrUpdatePersonAccountForPerson" in url:
                     debug_log["response_json"] = response_json
                     debug_log_path = os.path.join("logs", "api_debug.log")
@@ -269,7 +269,7 @@ class ApiClientBase:
                     error_detail = response.text
                     error_message += f", Response: {error_detail}"
                     
-                    # JSON解析エラー時のデバッグログ
+                    # Debug log on JSON parsing error
                     debug_log["json_error"] = {
                         "message": str(e),
                         "response_text": error_detail
@@ -284,12 +284,12 @@ class ApiClientBase:
                 logger.error(error_message)
                 return {"error": error_message}
 
-            if "Errors" in response_json and response_json["Errors"]:  # 空でない場合のみエラー処理
+            if "Errors" in response_json and response_json["Errors"]:  # Error handling only if not empty
                 errors = response_json["Errors"]
                 error_messages = [error["Message"] for error in errors]
                 error_message = f"API Errors: {', '.join(error_messages)}"
                 
-                # APIエラー時の詳細をデバッグログに記録
+                # Log API error details to debug logs
                 debug_log["api_errors"] = {
                     "errors": errors,
                     "error_message": error_message

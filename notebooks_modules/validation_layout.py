@@ -11,7 +11,7 @@ from validation_config import (
 def create_filter_panel(filter_options):
     """Create filter panel component."""
     return dbc.Card([
-        dbc.CardHeader("フィルター"),
+        dbc.CardHeader("Filters"),
         dbc.CardBody([
             dbc.Row([
                 dbc.Col([
@@ -35,8 +35,8 @@ def create_filter_panel(filter_options):
             ]),
             dbc.Row([
                 dbc.Col([
-                    dbc.Button("フィルター適用", id="apply-filters-button", color="primary", className="me-2"),
-                    dbc.Button("フィルタークリア", id="clear-filters-button", color="secondary")
+                    dbc.Button("Apply Filters", id="apply-filters-button", color="primary", className="me-2"),
+                    dbc.Button("Clear Filters", id="clear-filters-button", color="secondary")
                 ], className="mt-3")
             ])
         ])
@@ -95,8 +95,8 @@ def create_upload_grid():
 def create_app_layout(filter_panel, validation_grid, upload_grid):
     """Create main app layout."""
     upload_buttons = dbc.ButtonGroup([
-        dbc.Button("行を追加", id="add-row-button", color="primary", className="me-2"),
-        dbc.Button("選択行を削除", id="delete-rows-button", color="danger")
+        dbc.Button("Add Row", id="add-row-button", color="primary", className="me-2"),
+        dbc.Button("Delete Selected Rows", id="delete-rows-button", color="danger")
     ])
     
     upload_progress = dbc.Progress(id="upload-progress", value=0, striped=True, animated=True, className="mb-3")
@@ -114,13 +114,13 @@ def create_app_layout(filter_panel, validation_grid, upload_grid):
                 dbc.Button("Prepare for Upload", id="prepare-button", color="success")
             ]),
             dcc.Tab(label='Upload', children=[
-                html.H3("アップロード用データ"),
+                html.H3("Data for Upload"),
                 upload_grid,
                 html.Hr(),
                 upload_buttons,
                 html.Hr(),
                 html.Div([
-                    dbc.Button("Calabrioにアップロード", id="upload-button", color="danger"),
+                    dbc.Button("Upload to Calabrio", id="upload-button", color="danger"),
                     html.Div(id="upload-result"),
                     dbc.Collapse(
                         [upload_progress, upload_status],

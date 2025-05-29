@@ -24,45 +24,45 @@ def register_api_callbacks(app):
         if not n_clicks or not row_data:
             return "", False, 0, ""
         
-        # 有効な行（PersonIdとAbsenceIdがある行）をフィルタリング
+        # Filtering valid rows (rows with PersonId and AbsenceId)
         valid_rows = [row for row in row_data if row.get('PersonId') and row.get('AbsenceId')]
         total_rows = len(valid_rows)
         
         if total_rows == 0:
             return html.Div([
-                html.H4("エラー", className="text-danger"),
-                html.P("アップロードするデータがありません。PersonIdとAbsenceIdは必須です。")
+                html.H4("Error", className="text-danger"),
+                html.P("No data to upload. PersonId and AbsenceId are required.")
             ]), False, 0, ""
         
-        # APIクライアントの初期化
+        # Initializing API client
         base_url = os.environ.get('CALABRIO_API_URL', 'https://wise.teleopticloud.com/api')
         api_key = os.environ.get('CALABRIO_API_KEY', '')
         if not api_key:
             return html.Div([
-                html.H4("エラー", className="text-danger"),
-                html.P("API Keyが設定されていません。環境変数CALABRIO_API_KEYを設定してください。")
+                html.H4("Error", className="text-danger"),
+                html.P("API Key is not set. Please set the CALABRIO_API_KEY environment variable.")
             ]), False, 0, ""
             
         client = ApiClient(base_url, api_key)
         
-        # アップロード処理
+        # Upload process
         success_count = 0
         error_count = 0
         
-        # ログファイルの準備
+        # Preparing log file
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        ensure_directories()  # 必要なディレクトリを作成
+        ensure_directories()  # Creating necessary directories
         log_filename = UPLOAD_LOG_DIR / f'upload_log_{timestamp}.txt'
         
         with open(log_filename, 'w') as log_file:
-            # 各行を処理
+            # Processing each row
             for i, row in enumerate(valid_rows):
                 person_id = row.get('PersonId', '')
                 absence_id = row.get('AbsenceId', '')
                 date_from = row.get('StartDate', '')
                 
                 try:
-                    # 数値を適切に処理
+                    # Properly handle numbers
                     balance_in = row.get('BalanceIn', '')
                     if isinstance(balance_in, str) and balance_in.strip() == '':
                         balance_in = 0
@@ -78,7 +78,7 @@ def register_api_callbacks(app):
                         extra = 0
                     extra = int(float(extra))
                     
-                    # 本番APIを使用してアップロード
+                    # Uploading using production API
                     result = client.add_or_update_person_account_for_person(
                         person_id=person_id,
                         absence_id=absence_id,
@@ -88,7 +88,7 @@ def register_api_callbacks(app):
                         extra=extra
                     )
                     
-                    # 結果を記録
+                    # Recording results
                     log_entry = {
                         'timestamp': datetime.now().isoformat(),
                         'person_id': person_id,
@@ -111,7 +111,7 @@ def register_api_callbacks(app):
                         error_count += 1
                         
                 except Exception as e:
-                    # エラーを記録
+                    # Recording error
                     error_message = str(e)
                     log_entry = {
                         'timestamp': datetime.now().isoformat(),
@@ -129,29 +129,29 @@ def register_api_callbacks(app):
                     log_file.write(json.dumps(log_entry) + '\n')
                     error_count += 1
         
-        # 最終結果の表示
+        # Displaying final results
         if error_count == 0:
             result_color = "success"
             icon = "✓"
-            message = f"すべてのレコード ({success_count}件) が正常にアップロードされました。"
+            message = f"All records ({success_count}) successfully uploaded."
         elif error_count > 0 and success_count > 0:
             result_color = "warning"
             icon = "⚠️"
-            message = f"{success_count}件のアップロードが成功し、{error_count}件が失敗しました。"
+            message = f"{success_count} uploads succeeded, and {error_count} failed."
         else:
             result_color = "danger"
             icon = "❌"
-            message = f"すべてのアップロードが失敗しました。{error_count}件のエラーが発生しました。"
+            message = f"All uploads failed. {error_count} errors occurred."
         
-        # 処理時間
+        # Processing time
         end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
         final_result = html.Div([
-            html.H4(f"{icon} アップロード結果", className=f"text-{result_color}"),
+            html.H4(f"{icon} Upload Result", className=f"text-{result_color}"),
             html.P(message),
-            html.P(f"処理時間: {end_time}"),
-            html.P(f"ログファイル: {log_filename}"),
-            html.P("詳細はログファイルを確認してください。", className="text-muted")
+            html.P(f"Processing time: {end_time}"),
+            html.P(f"Log file: {log_filename}"),
+            html.P("Please check the log file for details.", className="text-muted")
         ])
         
-        return final_result, True, 100, f"完了 - 成功: {success_count}, 失敗: {error_count}"
+        return final_result, True, 100, f"Completed - Success: {success_count}, Failed: {error_count}"

@@ -16,7 +16,7 @@ from validation_calculator import BalanceCalculator
 def register_callbacks(app, validation_df):
     """Register all callbacks for the validation app."""
     
-    # フィルタリングコールバック
+    # Filtering Callback
     @app.callback(
         Output('validation-grid', 'rowData'),
         [Input('apply-filters-button', 'n_clicks'),
@@ -52,7 +52,7 @@ def register_callbacks(app, validation_df):
         
         return df.to_dict('records')
     
-    # データ転送コールバック
+    # Data Transfer Callback
     @app.callback(
         [Output('upload-grid', 'rowData'),
          Output('tabs', 'value'),
@@ -66,7 +66,7 @@ def register_callbacks(app, validation_df):
         if not callback_context.triggered or not selected_rows:
             return [], 'validation', "", False, ""
         
-        # 選択された行をアップロード形式に変換
+        # Convert selected rows to upload format
         upload_rows = []
         for row in selected_rows:
             upload_row = {
@@ -80,9 +80,9 @@ def register_callbacks(app, validation_df):
             }
             upload_rows.append(upload_row)
         
-        return upload_rows, 'upload', f"{len(upload_rows)}件のレコードをアップロード用に準備しました", True, "success"
+        return upload_rows, 'upload', f"{len(upload_rows)} records prepared for upload", True, "success"
     
-    # 行追加コールバック
+    # Add Row Callback
     @app.callback(
         Output('upload-grid', 'rowData', allow_duplicate=True),
         [Input('add-row-button', 'n_clicks')],
@@ -108,7 +108,7 @@ def register_callbacks(app, validation_df):
         else:
             return [empty_row]
     
-    # 行削除コールバック
+    # Delete Row Callback
     @app.callback(
         Output('upload-grid', 'rowData', allow_duplicate=True),
         [Input('delete-rows-button', 'n_clicks')],
@@ -120,14 +120,14 @@ def register_callbacks(app, validation_df):
         if not n_clicks or not selected_rows or not current_data:
             return no_update
         
-        # 選択された行のIDを取得
+        # Get IDs of selected rows
         selected_ids = set()
         for row in selected_rows:
-            # PersonIdとAbsenceIdの組み合わせで一意に識別
+            # Uniquely identify by combination of PersonId and AbsenceId
             row_id = f"{row.get('PersonId', '')}_{row.get('AbsenceId', '')}"
             selected_ids.add(row_id)
         
-        # 選択された行を除外
+        # Exclude selected rows
         new_data = []
         for row in current_data:
             row_id = f"{row.get('PersonId', '')}_{row.get('AbsenceId', '')}"
@@ -136,7 +136,7 @@ def register_callbacks(app, validation_df):
         
         return new_data
     
-    # デバッグ出力
+    # Debug Output
     @app.callback(
         Output('debug-output', 'children'),
         [Input('prepare-button', 'n_clicks'),
@@ -148,19 +148,19 @@ def register_callbacks(app, validation_df):
     def update_debug(prepare_clicks, add_clicks, delete_clicks, apply_clicks, clear_clicks):
         ctx = callback_context
         if not ctx.triggered:
-            return "ボタンがクリックされていません"
+            return "No button clicked"
         
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
         button_clicks = ctx.triggered[0]['value']
         
-        return f"{button_id}ボタンが{button_clicks}回クリックされました"
+        return f"{button_id} button clicked {button_clicks} times"
     
-    # 出力コンテナの更新
+    # Update Output Container
     @app.callback(
         Output('output-container', 'children'),
         [Input('upload-grid', 'rowData')]
     )
     def update_output(rows):
         if not rows:
-            return "データが選択されていません"
-        return f"アップロード用に{len(rows)}件のレコードが準備されています"
+            return "No data selected"
+        return f"For upload, {len(rows)} records are prepared"
