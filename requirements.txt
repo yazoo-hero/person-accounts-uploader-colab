@@ -1,0 +1,16 @@
+# Core dependencies
+dash>=2.14.0
+pandas>=2.0.0
+openpyxl>=3.1.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+plotly>=5.17.0
+
+# Data validation
+pydantic>=2.5.0
+
+# Jupyter support
+jupyter-dash>=0.4.2
+
+# Type checking (optional but recommended)
+typing-extensions>=4.8.0
