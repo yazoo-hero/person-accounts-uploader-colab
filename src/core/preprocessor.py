@@ -1,7 +1,6 @@
 """Data preprocessing functionality with type hints."""
 
 import logging
-from typing import Optional
 
 import pandas as pd
 

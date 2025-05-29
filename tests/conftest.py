@@ -1,7 +1,5 @@
 """Pytest configuration and fixtures."""
 
-import json
-
 # Add src to Python path
 import sys
 from datetime import datetime

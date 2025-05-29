@@ -101,25 +101,25 @@ def map_absence_id(row: Dict[str, Any], config_data: Dict[str, Any]) -> Optional
     # Attempt exact match
     for absence in absences:
         if absence.get("Name") == absence_name:
-            return absence.get("Id")
+            return str(absence.get("Id", ""))
 
     # Attempt case-insensitive match
     absence_name_lower = absence_name.lower()
     for absence in absences:
         if absence.get("Name", "").lower() == absence_name_lower:
-            return absence.get("Id")
+            return str(absence.get("Id", ""))
 
     # Attempt partial match
     for absence in absences:
         if absence_name_lower in absence.get("Name", "").lower():
-            return absence.get("Id")
+            return str(absence.get("Id", ""))
 
     # Retry by adding 'Global -' prefix
     if not absence_name.lower().startswith("global -"):
         global_absence = f"Global - {absence_name}"
         for absence in absences:
             if absence.get("Name") == global_absence:
-                return absence.get("Id")
+                return str(absence.get("Id", ""))
 
     logger.debug(f"No absence ID found for: {business_unit} - {absence_name}")
     return None

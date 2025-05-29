@@ -4,7 +4,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from dotenv import load_dotenv
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class Config:
     """Application configuration."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         # API Configuration
         self.CALABRIO_API_BASE_URL = os.getenv("CALABRIO_API_BASE_URL", "")
         self.CALABRIO_API_KEY = os.getenv("CALABRIO_API_KEY", "")
@@ -62,7 +62,7 @@ class Config:
         # Validate configuration
         self._validate()
 
-    def _validate(self):
+    def _validate(self) -> None:
         """Validate configuration settings."""
         if self.APP_ENV == "production":
             if not self.CALABRIO_API_BASE_URL:
@@ -80,7 +80,7 @@ class Config:
                 return {}
 
             with open(file_path, "r", encoding="utf-8") as f:
-                return json.load(f)
+                return dict(json.load(f))
         except json.JSONDecodeError as e:
             raise ConfigurationError(f"Invalid JSON in {file_path}: {e}")
         except Exception as e:
@@ -102,7 +102,7 @@ class Config:
         """Get Calabrio configuration data."""
         return self.load_json_config(self.CONFIG_DATA_PATH)
 
-    def setup_logging(self):
+    def setup_logging(self) -> None:
         """Set up logging configuration."""
         log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 

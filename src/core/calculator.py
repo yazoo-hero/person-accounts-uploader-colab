@@ -4,7 +4,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 from ..utils.exceptions import CalculationError, ConfigurationError
 
@@ -34,7 +34,7 @@ class BalanceCalculator:
             with open(self.rules_file, "r", encoding="utf-8") as f:
                 rules = json.load(f)
             logger.info(f"Loaded balance rules from {self.rules_file}")
-            return rules
+            return dict(rules)
         except json.JSONDecodeError as e:
             raise ConfigurationError(f"Invalid JSON in rules file: {e}")
         except Exception as e:
@@ -192,7 +192,7 @@ class BalanceCalculator:
             months_employed = 12 - hire_date.month + 1
             prorated = months_employed * monthly_rate
 
-            return min(prorated, full_accrual)
+            return float(min(prorated, full_accrual))
 
         except Exception as e:
             logger.warning(f"Error prorating accrual: {e}")

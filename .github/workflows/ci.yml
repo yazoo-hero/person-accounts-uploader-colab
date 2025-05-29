@@ -45,6 +45,9 @@ jobs:
         
         # Linting with flake8
         flake8 src tests --max-line-length=100 --extend-ignore=E203,W503
+        
+        # Skip notebooks_modules for now as it's legacy code
+        # TODO: Refactor notebooks_modules to meet quality standards
     
     - name: Run type checking
       run: |
