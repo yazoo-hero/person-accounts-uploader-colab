@@ -32,7 +32,10 @@ class DataPreprocessor:
 
         if people_df.empty:
             logger.warning("People DataFrame is empty")
-            workday_df["MappedEmploymentNumber"] = workday_df.get("WiserId", pd.Series())
+            if "WiserId" in workday_df.columns:
+                workday_df["MappedEmploymentNumber"] = workday_df["WiserId"]
+            else:
+                workday_df["MappedEmploymentNumber"] = pd.Series(dtype=object)
             return workday_df
 
         # Check required columns
