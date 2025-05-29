@@ -145,13 +145,16 @@ jobs:
     
     - name: Build documentation
       run: |
-        cd docs
-        make html || echo "Documentation build skipped"
+        if [ -d "docs" ]; then
+          cd docs
+          make html
+        else
+          echo "Documentation directory not found - skipping docs build"
+        fi
     
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v4
-      if: success()
+      if: success() && hashFiles('docs/_build/html/*') != ''
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./docs/_build/html
-        cname: your-custom-domain.com  # Optional: remove if not using custom domain
